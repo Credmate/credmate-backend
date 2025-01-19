@@ -294,3 +294,17 @@ model AllLenderRequest {
   @@index([uid])
   @@map("alllenderrequests")
 }
+
+
+// ======= Contract ======= 
+
+model Contract {
+
+  id               String        @id @default(uuid())
+  lenderId         String        // // User Id Of the lender FK to user table. 
+  borrowerId       String        // User Id Of the borrower  FK to user table.
+  documentId       String        // Contract document Id.    This is a unique id but is not the PK. Could be FK to any new tables in the future. 
+  repaymentType    String       // Can be removed if not needed.             
+
+  @@map("allcontracts")        // Is this needed ? 
+}

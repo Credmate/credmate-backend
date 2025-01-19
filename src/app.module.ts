@@ -11,6 +11,7 @@ import { AppController } from './app.controller';
 import { PrismaModule } from './prisma/prisma.module';
 import { LenderRequestModule } from './lender/lender-request.module';
 import { CreditModule } from './credit/credit.module';
+import { ContractsModule } from './contracts/contracts.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { CreditModule } from './credit/credit.module';
     PaymentModule,
     LenderRequestModule,
     CreditModule,
+    ContractsModule,
   ],
   controllers: [AppController],
 })
