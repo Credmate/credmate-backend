@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, StreamableFile } from '@nestjs/common';
 import { CreateContractDto } from './dto/create-contract.dto';
 import { UpdateContractDto } from './dto/update-contract.dto';
 import { PrismaService } from '../database/prisma/prisma.service';
+import { createReadStream, readFile } from 'fs';
+import { join } from 'path';
 import {replaceInFile} from 'replace-in-file';
 
 
@@ -31,7 +33,7 @@ export class ContractsService {
     return `This action removes a #${id} contract`;
   }
    
-  async createTentativeContract(createContractDto: CreateContractDto) {
+  async createTentativeContract(createContractDto: CreateContractDto): Promise<StreamableFile>  {
 
     const options = {
       files : 'template/Contract_Template.pdf',
@@ -78,7 +80,7 @@ export class ContractsService {
         /VERIFICATION_HASH/,
         /LENDER_TIMESTAMP/,
         /BORROWER_TIMESTAMP/,
-        /VERIFICATION_HASH/] ] ,
+        /VERIFICATION_HASH/],
       to: 
         ['createContractDto.TIMESTAMP',
          'createContractDto.CITY',
@@ -121,10 +123,17 @@ export class ContractsService {
     try {
       const results = await replaceInFile(options);
       console.log('Replacement results:', results)
+      
+      const tentativeContract = createReadStream(join(process.cwd(),'./template/Contact_Template.pdf'));
+      return new StreamableFile(tentativeContract, {
+        type: 'application/pdf',
+        disposition: 'attachment; filename="Contract_Template.pdf"',
+      });
     }
     catch (error) {
       console.error('Error occurred:', error)
     }
+    
   } 
 
 
