@@ -77,6 +77,42 @@ export class S3Service {
     } catch (error) {
       throw new Error(`Failed to upload file to S3: ${error.message}`);
     }
+  } 
+  
+  //CONTRACTS have a different bucket. The folder name is going to be the lender user ID. 
+  async uploadContractFile(
+    file: Express.Multer.File,
+    userId: string, 
+  ): Promise<string> {
+    const bucketName = this.configService.get('AWS_S3_BUCKET_NAME_CONTRACTS');
+    
+    // Ensure user folder exists
+    await this.createFolderIfNotExists(bucketName, userId);
+    
+    // Create file path: userId/timestamp-filename
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const sanitizedFilename = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const key = `${userId}/${timestamp}-${sanitizedFilename}`;
+
+    const uploadParams = {
+      Bucket: bucketName,
+      Key: key,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+      Metadata: {
+        userId: userId,
+        originalName: file.originalname,
+        uploadTimestamp: new Date().toISOString()
+      },
+    };
+
+    try {
+      const command = new PutObjectCommand(uploadParams);
+      const result = await this.s3.send(command);
+      return result.$metadata.httpStatusCode === 200 ? `https://${bucketName}.s3.${this.configService.get('AWS_REGION')}.amazonaws.com/${key}` : '';
+    } catch (error) {
+      throw new Error(`Failed to upload file to S3: ${error.message}`);
+    }
   }
 
   async listUserFiles(userId: string): Promise<string[]> {

@@ -5,17 +5,33 @@ import { PrismaService } from '../database/prisma/prisma.service';
 import { createReadStream, readFile } from 'fs';
 import { join } from 'path';
 import {replaceInFile} from 'replace-in-file';
+import { S3Service } from 'src/common/services/s3.service';
 
 
 @Injectable()
 export class ContractsService {
 
-  constructor(private readonly prismaService: PrismaService){}
+  constructor(private readonly prismaService: PrismaService, 
+    private readonly s3Service: S3Service,
+  ){}
 
-  create(createContractDto: CreateContractDto) {
-    return 'This action adds a new contract';
+  /**
+   * 
+   * Uploads the contract file to the contracts bucket and creates a table entry.  
+   * @param file : Is the contract file which includes signatures of the lender and the borrower. 
+   * @param userId : Is the user ID of the lender.  
+   * @returns
+   */
+
+  create(file: Express.Multer.File, userId: string, borrowerId: string) {
+   const contractDocument = this.s3Service.uploadContractFile(file, userId);  
+   this.prismaService.Contract.create({data: {
+    lenderId: userId,
+    borrowerId: borrowerId,
+    documentId: contractDocument
+   }})                        
   }
-
+  
   
   findAll() {
     return `This action returns all contracts`;
@@ -33,6 +49,11 @@ export class ContractsService {
     return `This action removes a #${id} contract`;
   }
    
+  /*
+  TODO: Contract template should ideally be in a s3 bucket with version control.  
+   This is a very poor practice and is only being done to get things done faster. 
+  */
+
   async createTentativeContract(createContractDto: CreateContractDto): Promise<StreamableFile>  {
 
     const options = {
@@ -121,9 +142,7 @@ export class ContractsService {
     }
     
     try {
-      const results = await replaceInFile(options);
-      console.log('Replacement results:', results)
-      
+      const results = await replaceInFile(options);      
       const tentativeContract = createReadStream(join(process.cwd(),'./template/Contact_Template.pdf'));
       return new StreamableFile(tentativeContract, {
         type: 'application/pdf',
