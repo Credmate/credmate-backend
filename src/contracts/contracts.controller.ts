@@ -19,23 +19,17 @@ export class ContractsController {
     return this.contractsService.createTentativeContract(createContractDto);
   }
 
-  @Get()
-  findAll() {
-    return this.contractsService.findAll();
-  }
-
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.contractsService.findOne(+id);
+    return this.contractsService.findContractsForOneLender(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateContractDto: UpdateContractDto) {
-    return this.contractsService.update(+id, updateContractDto);
-  }
+    /*
+  TODO: Two Methods are missing here. 
+   1) Find All -> We need to think about what findall means here. 
+   A. does it mean finding all contracts for a sepecific lender or all contracts?
+   B. It does not seem like we need this method now. Future features might need this. 
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.contractsService.remove(+id);
-  }
+  */
+
 }

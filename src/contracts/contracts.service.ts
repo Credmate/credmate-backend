@@ -1,4 +1,4 @@
-import { Injectable, StreamableFile } from '@nestjs/common';
+import { BadRequestException, Injectable, StreamableFile } from '@nestjs/common';
 import { CreateContractDto } from './dto/create-contract.dto';
 import { UpdateContractDto } from './dto/update-contract.dto';
 import { PrismaService } from '../database/prisma/prisma.service';
@@ -24,31 +24,41 @@ export class ContractsService {
    */
 
   create(file: Express.Multer.File, userId: string, borrowerId: string) {
-   const contractDocument = this.s3Service.uploadContractFile(file, userId);  
-   this.prismaService.Contract.create({data: {
-    lenderId: userId,
-    borrowerId: borrowerId,
-    documentId: contractDocument
-   }})                        
-  }
-  
-  
-  findAll() {
-    return `This action returns all contracts`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} contract`;
-  }
-
-  update(id: number, updateContractDto: UpdateContractDto) {
-    return `This action updates a #${id} contract`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} contract`;
-  }
+ 
+    let contractDocument = null;
+    try { 
+     contractDocument = this.s3Service.uploadContractFile(file, userId);
    
+  } 
+catch(error)
+{
+   throw new BadRequestException(`Unable to upload contract file., ${error.message}`);
+}   
+
+this.prismaService.Contract.create({data: {
+  lenderId: userId,
+  borrowerId: borrowerId,
+  documentId: contractDocument
+   }})
+}
+  
+  
+  /**
+   * 
+   * @param id THis is the lender id. 
+   * @returns returns all contrats 
+   */
+
+  findContractsForOneLender(id: number) {
+    return  this.prismaService.Contract.findMany({
+      where : {
+       lenderId : {
+         equals : id,
+       },
+      }, 
+     });
+  }
+
   /*
   TODO: Contract template should ideally be in a s3 bucket with version control.  
    This is a very poor practice and is only being done to get things done faster. 
